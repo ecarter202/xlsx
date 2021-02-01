@@ -24,6 +24,7 @@ type File struct {
 	Sheet          map[string]*Sheet
 	theme          *theme
 	DefinedNames   []*xlsxDefinedName
+	filePath       string
 }
 
 const NoRowLimit int = -1
@@ -51,7 +52,14 @@ func OpenFileWithRowLimit(fileName string, rowLimit int) (file *File, err error)
 	if err != nil {
 		return nil, err
 	}
-	return ReadZipWithRowLimit(z, rowLimit)
+
+	file, err = ReadZipWithRowLimit(z, rowLimit)
+	if err != nil {
+		return nil, err
+	}
+	file.filePath = fileName
+
+	return file, nil
 }
 
 // OpenBinary() take bytes of an XLSX file and returns a populated
@@ -117,8 +125,13 @@ func FileToSliceUnmerged(path string) ([][][]string, error) {
 	return f.ToSliceUnmerged()
 }
 
-// Save the File to an xlsx file at the provided path.
-func (f *File) Save(path string) (err error) {
+// Save the File to an xlsx file at the original path.
+func (f *File) Save() (err error) {
+	return f.SaveAs(f.filePath)
+}
+
+// SaveAs the File to an xlsx file at the provided path.
+func (f *File) SaveAs(path string) (err error) {
 	target, err := os.Create(path)
 	if err != nil {
 		return err
